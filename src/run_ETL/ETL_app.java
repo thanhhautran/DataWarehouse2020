@@ -24,7 +24,7 @@ public class ETL_app {
 				}
 			}else {
 				try {
-					SendMail.sendMailToVertify("", "Loi load file tu local len staging", "");
+					SendMail.sendMailToVertify("17130059", "Loi load file tu local len staging", "");
 				} catch (MessagingException e) {
 					e.printStackTrace();
 				}
