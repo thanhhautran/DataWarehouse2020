@@ -29,6 +29,7 @@ import updateLogAndConfig.UpdateLog;
 public class LoadToDatabase {
 		public static void main(String[] args) throws EncryptedDocumentException, IOException {
 			LoadToDatabase ltd = new LoadToDatabase();
+			ltd.addColumn("", "MSSV,Holot,Ten,Ngaysinh,Malop,lop,sodienthoai,email,Quequan,ghichu", "MSSV:varchar(8),Ten:varchar(20),lop:varchar(40),sodienthoai:varchar(10)", "", "", "");
 		}
 		public boolean fileIsExsist(String config) {
 			String[] part = config.split("\t");
@@ -238,5 +239,30 @@ public class LoadToDatabase {
 		public void combineData(String config) {
 			Preprocessing ppc = new Preprocessing();
 			ppc.combineValue(config);
+		}
+		public void addColumn(String tableName,String listCol,String listWarehouseRequired,String desConfig,String user,String password) {
+			String[] listStrings = listCol.split(",");
+			String[] listRequired = listWarehouseRequired.split(",");
+			String command  = "ALTER TABLE "+tableName;
+			String temp = listStrings[listStrings.length-1];
+			for (int i = 0; i < listRequired.length; i++) {
+				String[] part = listRequired[i].split(":");
+				String columnName = part[0];
+				String type = part[1];
+				command+= " ADD COLUMN '"+columnName+"'"+" "+type+" NULL AFTER "+temp+","+"\n";
+				temp = temp.replace(temp, columnName);
+			}
+			command = command.substring(0, command.length()-2);
+			try {
+				Connection connection_user = DriverManager.getConnection(desConfig, user, password);
+				connection_user.setAutoCommit(false);
+				PreparedStatement stat = connection_user.prepareStatement(command);
+				stat.execute();
+				connection_user.commit();
+				connection_user.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 }
