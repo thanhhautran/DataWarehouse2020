@@ -29,7 +29,6 @@ import updateLogAndConfig.UpdateLog;
 public class LoadToDatabase {
 		public static void main(String[] args) throws EncryptedDocumentException, IOException {
 			LoadToDatabase ltd = new LoadToDatabase();
-			ltd.addColumn("", "MSSV,Holot,Ten,Ngaysinh,Malop,lop,sodienthoai,email,Quequan,ghichu", "MSSV_warehouse:varchar(8),Ten_warehouse:varchar(20),lop_warehouse:varchar(40),sodienthoai_warehouse:varchar(10)", "", "", "");
 		}
 		public boolean fileIsExsist(String config) {
 			String[] part = config.split("\t");
@@ -259,17 +258,17 @@ public class LoadToDatabase {
 				temp = temp.replace(temp, columnName);
 			}
 			command = command.substring(0, command.length()-2);
-//			try {
-//				Connection connection_user = DriverManager.getConnection(desConfig, user, password);
-//				connection_user.setAutoCommit(false);
-//				PreparedStatement stat = connection_user.prepareStatement(command);
-//				stat.execute();
-//				connection_user.commit();
-//				connection_user.close();
-//			} catch (SQLException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
+			try {
+				Connection connection_user = DriverManager.getConnection(desConfig, user, password);
+				connection_user.setAutoCommit(false);
+				PreparedStatement stat = connection_user.prepareStatement(command);
+				stat.execute();
+				connection_user.commit();
+				connection_user.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			System.out.println(colAdd);
 			return colAdd.substring(0,colAdd.length()-1);
 		}
