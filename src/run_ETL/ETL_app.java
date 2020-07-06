@@ -1,6 +1,6 @@
 package run_ETL;
 
-import java.util.List;
+
 
 import javax.mail.MessagingException;
 
@@ -18,8 +18,12 @@ public class ETL_app {
 				try {
 					System.out.println(fileSplit[i]);
 					ltd.loadToLocal(fileSplit[i]);
-//					ltd.combineData(fileSplit[i]);
-//					ltd.cleanData();
+					if(ltd.isEqualColNum(fileSplit[i])) {
+						ltd.addAndInsert(fileSplit[i]);
+//						ltd.cleanData();
+					}else {
+						SendMail.sendMailToVertify("17130059", "Load Khong du dong ", "");
+					}
 				}catch (Exception e) {
 				}
 			}else {

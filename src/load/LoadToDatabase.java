@@ -50,6 +50,26 @@ public class LoadToDatabase {
 			}
 			return numcol;
 		}
+		public boolean isEqualColNum(String listConfig) {
+			String[] part = listConfig.split("\t");
+			try {
+				int colNumExecute = getNumColOfTable(part[9], part[4], part[1], part[2]);
+				if(colNumExecute == Integer.parseInt(part[10])) {
+					return true;
+				}
+				
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return false;
+		}
+		public void addAndInsert(String listConfig) {
+			String[] part = listConfig.split("\t");
+			String colName = addColumn(part[9], part[7], part[8], part[4], part[1], part[2]);
+			insertData(part[9], part[4], part[1], part[2], colName);
+			
+		}
 		public static String getListFileLoad() {
 			String list ="";
 	        int idConfig =0;
@@ -62,6 +82,7 @@ public class LoadToDatabase {
 			String listColumn = "";
 			String listWarehouseRequireCol = "";
 			String Staging_tabName = "";
+			int colNum = 0;
 	        try {
 				Connection connection_user = BaseConnection.getMySQLConnection();
 				connection_user.setAutoCommit(false);
@@ -79,7 +100,9 @@ public class LoadToDatabase {
 					listColumn = rs.getString(10);//7
 					listWarehouseRequireCol = rs.getString(11);//8
 					Staging_tabName = rs.getString(12);//9
-				list = idConfig+"\t"+username+"\t"+password+"\t"+localdir+"\t"+des_config+"\t"+fileType+"\t"+delimiter+"\t"+listColumn+"\t"+listWarehouseRequireCol+"\t"+Staging_tabName+"\n"; 
+					colNum = rs.getInt(13);//10
+					
+				list = idConfig+"\t"+username+"\t"+password+"\t"+localdir+"\t"+des_config+"\t"+fileType+"\t"+delimiter+"\t"+listColumn+"\t"+listWarehouseRequireCol+"\t"+Staging_tabName+"\t"+colNum+"\n"; 
 				}
 				connection_user.close();
 			} catch (SQLException | ClassNotFoundException e1) {
@@ -254,7 +277,7 @@ public class LoadToDatabase {
 				}else {
 				colAdd += columnName+":"+columnName.substring(0, columnName.indexOf('_'))+",";
 				}
-				command+= " ADD COLUMN '"+columnName+"'"+" "+type+" NULL AFTER "+temp+","+"\n";
+				command+= " ADD COLUMN `"+columnName+"`"+" "+type+" NULL AFTER "+temp+","+"\n";
 				temp = temp.replace(temp, columnName);
 			}
 			command = command.substring(0, command.length()-2);
@@ -262,14 +285,14 @@ public class LoadToDatabase {
 				Connection connection_user = DriverManager.getConnection(desConfig, user, password);
 				connection_user.setAutoCommit(false);
 				PreparedStatement stat = connection_user.prepareStatement(command);
-				stat.execute();
+				stat.executeUpdate();
 				connection_user.commit();
 				connection_user.close();
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			System.out.println(colAdd);
+			System.out.println(command);
 			return colAdd.substring(0,colAdd.length()-1);
 		}
 		public void insertData(String tableName,String desConfig,String user,String password,String colName) {
@@ -278,15 +301,16 @@ public class LoadToDatabase {
 			for (int i = 0; i < listWarehouse.length; i++) {
 				String[] part = listWarehouse[i].split(":");
 				if(part[1].split("va").length > 1) {
-					command += "update data1 set "+part[0]+" = concat("+part[1].split("va")[0]+", \" \","+part[1].split("va")[1]+");"+"\n";
+					command += "update data1 SET `"+part[0]+"` = concat("+part[1].split("va")[0]+", \" \","+part[1].split("va")[1]+");"+"\n";
 				}else {
-					command += "UPDATE data1 SET "+part[0]+" = "+part[1]+";"+"\n";
+					command += "UPDATE data1 SET `"+part[0]+"` = "+part[1]+";"+"\n";
 				}
 			}
+			System.out.println(command);
 			try {
 				Connection connection_user = DriverManager.getConnection(desConfig, user, password);
 				connection_user.setAutoCommit(false);
-				PreparedStatement stat = connection_user.prepareStatement("");
+				PreparedStatement stat = connection_user.prepareStatement(command);
 				stat.executeUpdate();
 				connection_user.commit();
 				connection_user.close();
