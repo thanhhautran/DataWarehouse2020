@@ -209,7 +209,7 @@ public class LoadToDatabase {
 				}
 				Connection connection_user = DriverManager.getConnection(desConfig, user, password);
 				connection_user.setAutoCommit(false);
-				PreparedStatement stat = connection_user.prepareStatement("load data infile "+"'"+sourceConfig+"'"+" into table " +tableName+" CHARACTER SET latin1 FIELDS TERMINATED BY ',' ENCLOSED BY '\"' LINES TERMINATED BY '\\n' IGNORE 1 LINES (STT,MSSV,HoLot,Ten,Ngaysinh,Malop,lop,sodienthoai,email,Quequan,ghichu);");
+				PreparedStatement stat = connection_user.prepareStatement("load data infile "+"'"+sourceConfig+"'"+" into table " +tableName+" CHARACTER SET latin1 FIELDS TERMINATED BY ',' ENCLOSED BY '\"' LINES TERMINATED BY '\\n' IGNORE 1 LINES;");
 				stat.execute();
 				connection_user.commit();
 				connection_user.close();
@@ -225,7 +225,8 @@ public class LoadToDatabase {
 				if(delimiter.equals("comma")) {
 					delimiter =",";
 				}
-				PreparedStatement stat = connection_user.prepareStatement("load data infile "+"'"+sourceConfig+"'"+" into table " +tableName+" CHARACTER SET latin1 FIELDS TERMINATED BY '"+delimiter+"' ENCLOSED BY '\"' LINES TERMINATED BY '\\r\\n' IGNORE 1 LINES (STT,MSSV,HoLot,Ten,Ngaysinh,Malop,lop,sodienthoai,email,Quequan,ghichu);");
+				
+				PreparedStatement stat = connection_user.prepareStatement("load data infile "+"'"+sourceConfig+"'"+" into table " +tableName+" CHARACTER SET latin1 FIELDS TERMINATED BY '"+delimiter+"' ENCLOSED BY '\"' LINES TERMINATED BY '\\r\\n' IGNORE 1 LINES");
 				stat.execute();
 				connection_user.commit();
 				connection_user.close();
@@ -244,8 +245,8 @@ public class LoadToDatabase {
 				System.out.println(desConfig+" "+user+" "+password);
 				Connection connection_user = DriverManager.getConnection(desConfig, user, password);
 				connection_user.setAutoCommit(false);
-				System.out.println("load data infile "+"'"+source+"'"+" into table " +tableName+" CHARACTER SET latin1 FIELDS TERMINATED BY '"+delimiter+"' ENCLOSED BY '\"' LINES TERMINATED BY '\\n' IGNORE 1 LINES (STT,MSSV,HoLot,Ten,Ngaysinh,Malop,lop,sodienthoai,email,Quequan,ghichu);");
-				PreparedStatement stat = connection_user.prepareStatement("load data infile "+"'"+source+"'"+" into table " +tableName+" CHARACTER SET latin1 FIELDS TERMINATED BY '"+delimiter+"' ENCLOSED BY '\"' LINES TERMINATED BY '\\n' IGNORE 1 LINES (STT,MSSV,HoLot,Ten,Ngaysinh,Malop,lop,sodienthoai,email,Quequan,ghichu);");
+				System.out.println("load data infile "+"'"+source+"'"+" into table " +tableName+" CHARACTER SET latin1 FIELDS TERMINATED BY '"+delimiter+"' ENCLOSED BY '\"' LINES TERMINATED BY '\\n' IGNORE 1 LINES");
+				PreparedStatement stat = connection_user.prepareStatement("load data infile "+"'"+source+"'"+" into table " +tableName+" CHARACTER SET latin1 FIELDS TERMINATED BY '"+delimiter+"' ENCLOSED BY '\"' LINES TERMINATED BY '\\n' IGNORE 1 LINES ");
 				stat.execute();
 				connection_user.commit();
 				connection_user.close();
@@ -301,17 +302,20 @@ public class LoadToDatabase {
 			for (int i = 0; i < listWarehouse.length; i++) {
 				String[] part = listWarehouse[i].split(":");
 				if(part[1].split("va").length > 1) {
-					command += "update data1 SET `"+part[0]+"` = concat("+part[1].split("va")[0]+", \" \","+part[1].split("va")[1]+");"+"\n";
+					command += "UPDATE data1 SET "+part[0]+" = concat("+part[1].split("va")[0]+", \" \","+part[1].split("va")[1]+");"+"\n";
 				}else {
-					command += "UPDATE data1 SET `"+part[0]+"` = "+part[1]+";"+"\n";
+					command += "UPDATE data1 SET "+part[0]+" = "+part[1]+";"+"\n";
 				}
 			}
 			System.out.println(command);
 			try {
+				String[] step = command.split("\n"); 
 				Connection connection_user = DriverManager.getConnection(desConfig, user, password);
 				connection_user.setAutoCommit(false);
-				PreparedStatement stat = connection_user.prepareStatement(command);
-				stat.executeUpdate();
+				for (int i = 0; i < step.length; i++) {
+					PreparedStatement stat = connection_user.prepareStatement(step[i]);
+					stat.execute();
+				}
 				connection_user.commit();
 				connection_user.close();
 			} catch (SQLException e) {
