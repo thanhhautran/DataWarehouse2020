@@ -116,16 +116,6 @@ public class LoadToDatabase {
 			String log = getLogOf(1);
 			String[] f_log = log.split(",");
 			switch (fields[5]) {
-			case ".csv": {	
-				try {
-				loadFileCsv(Integer.parseInt(fields[0]),Integer.parseInt(f_log[0]),fields[3],fields[6], fields[4],fields[1], fields[2], fields[9]);
-					int numcol = getNumColOfTable(fields[9], fields[7], fields[1],fields[2]);
-					ul.updateLogWhenSuccess(Integer.parseInt(f_log[0]),numcol);
-					SendMail.sendMailToVertify("", "load file thanh cong", "");
-				}catch (Exception e) {
-					ul.updateLogWhenFail(Integer.parseInt(f_log[0]));
-				}
-			}
 			case ".xlsx": {
 				try {
 				loadFileExcel(Integer.parseInt(fields[0]),Integer.parseInt(f_log[0]),fields[3],fields[6], fields[4],fields[1], fields[2], fields[9]);
@@ -141,6 +131,18 @@ public class LoadToDatabase {
 				loadFileTxt(Integer.parseInt(fields[0]),Integer.parseInt(f_log[0]),fields[3],fields[6], fields[4],fields[1], fields[2], fields[9]);
 					int numcol = getNumColOfTable(fields[9], fields[7], fields[1],fields[2]);
 					ul.updateLogWhenSuccess(Integer.parseInt(f_log[0]), numcol);
+					SendMail.sendMailToVertify("", "load file thanh cong", "");
+				}catch (Exception e) {
+					ul.updateLogWhenFail(Integer.parseInt(f_log[0]));
+				}
+			}
+			case ".csv": {	
+				try {
+				loadFileCsv(Integer.parseInt(fields[0]),Integer.parseInt(f_log[0]),fields[3],fields[6], fields[4],fields[1], fields[2], fields[9]);
+					int numcol = getNumColOfTable(fields[9], fields[7], fields[1],fields[2]);
+					System.out.println("loadthanhcong");
+					ul.updateLogWhenFail(Integer.parseInt(f_log[0]));
+					ul.updateLogWhenSuccess(Integer.parseInt(f_log[0]),numcol);
 					SendMail.sendMailToVertify("", "load file thanh cong", "");
 				}catch (Exception e) {
 					ul.updateLogWhenFail(Integer.parseInt(f_log[0]));
@@ -212,7 +214,7 @@ public class LoadToDatabase {
 				PreparedStatement stat = connection_user.prepareStatement("load data infile "+"'"+sourceConfig+"'"+" into table " +tableName+" CHARACTER SET latin1 FIELDS TERMINATED BY ',' ENCLOSED BY '\"' LINES TERMINATED BY '\\n' IGNORE 1 LINES;");
 				stat.execute();
 				connection_user.commit();
-				connection_user.close();
+				connection_user.close();		
 			} catch (SQLException e1) {
 				e1.printStackTrace();
 			}
@@ -242,10 +244,8 @@ public class LoadToDatabase {
 				String afterConvert = convertToCsv(sourceConfig);
 				File file = new File(afterConvert);
 				String source = file.getParent()+"\\\\"+file.getName();
-				System.out.println(desConfig+" "+user+" "+password);
 				Connection connection_user = DriverManager.getConnection(desConfig, user, password);
 				connection_user.setAutoCommit(false);
-				System.out.println("load data infile "+"'"+source+"'"+" into table " +tableName+" CHARACTER SET latin1 FIELDS TERMINATED BY '"+delimiter+"' ENCLOSED BY '\"' LINES TERMINATED BY '\\n' IGNORE 1 LINES");
 				PreparedStatement stat = connection_user.prepareStatement("load data infile "+"'"+source+"'"+" into table " +tableName+" CHARACTER SET latin1 FIELDS TERMINATED BY '"+delimiter+"' ENCLOSED BY '\"' LINES TERMINATED BY '\\n' IGNORE 1 LINES ");
 				stat.execute();
 				connection_user.commit();
