@@ -15,6 +15,7 @@ import org.apache.poi.ss.formula.functions.Vlookup;
 import com.mysql.jdbc.Statement;
 
 import connectionDatabase.BaseConnection;
+import updateLogAndConfig.UpdateLog;
 
 public class StagingToWarehouse {
 	public void part3() throws SQLException {
@@ -89,6 +90,7 @@ public class StagingToWarehouse {
 	}
 	public void LoadToWarehouse(Map<String,String> map) throws SQLException {
 		Connection connection_user = null;
+		UpdateLog ul = new UpdateLog();
 		if(checkExistsOfProceDure(map.get("warehouse_des"), map.get("username"), map.get("password"), map.get("procedureName")) == true) {
 			try {
 				connection_user = DriverManager.getConnection(map.get("warehouse_des"), map.get("username"), map.get("password"));
@@ -103,24 +105,24 @@ public class StagingToWarehouse {
 					String value = handleValue(rs,map.get("listColumn"));
 					insertOneRecord(value,map.get("procedureName"),map.get("warehouse_des"),map.get("username"),map.get("password"));
 				}
-				//ghi log
-				//truncate table
+				connection_user.close();
+				ul.updateLogWhenSuccessLoadWarehouse(Integer.parseInt(map.get("idConfig")));
+				truncateTable(map.get("des_config"), map.get("username"),map.get("password"), map.get("Staging_tabName"));
 			} catch (SQLException e) {
-				// TODO Auto-generated catch block
 				connection_user.rollback();
-				e.printStackTrace();
+//				connection_user.close();
+//				ul.updateLogWhenFailLoadWarehouse(Integer.parseInt(map.get("idConfig")));
 			}
 		}else {
 			createProcedure(map.get("procedureName"), map.get("listWarehouseRequireCol"), map.get("warehouseTabName"), map.get("warehouseColumn"), map.get("warehouse_naturalKey"));
 		}
-		
 	}
 	public void truncateTable(String destination,String username,String password,String tableName) {
 		try {
 			Connection connection_user = DriverManager.getConnection(destination, username, password);
 			connection_user.setAutoCommit(false);
 			
-			PreparedStatement stat = connection_user.prepareStatement("TRUNCATE TABLE"+tableName+";");
+			PreparedStatement stat = connection_user.prepareStatement("TRUNCATE TABLE "+tableName+";");
 			stat.execute();
 			
 			connection_user.commit();
@@ -194,7 +196,7 @@ public class StagingToWarehouse {
 		String[] part = infor.split("\n");
 		String cmd = "CREATE DEFINER=`root`@`localhost` PROCEDURE `"+procedureName+"`("+part[0]+")\r\n" + 
 				"If EXISTS (SELECT * FROM "+tableName+" WHERE "+tableName+"."+naturalKey+"= "+naturalKey+" and "+tableName+".dt_expired='9999-01-01') then\r\n" + 
-				"	update studentdim set "+tableName+".dt_expired=curdate() where "+tableName+"."+naturalKey+"= "+naturalKey+" and "+tableName+".dt_expired='9999-01-01';\r\n" + 
+				"	update "+tableName+" set "+tableName+".dt_expired=curdate() where "+tableName+"."+naturalKey+"= "+naturalKey+" and "+tableName+".dt_expired='9999-01-01';\r\n" + 
 				"	insert into "+tableName+"("+part[1]+",dt_expired,dt_haschange) values("+part[1]+",'9999-01-01','9999-01-01');\r\n" + 
 				"ELSE\r\n" + 
 				"   insert into "+tableName+"("+part[1]+",dt_expired,dt_haschange) values("+part[1]+",'9999-01-01','9999-01-01');\r\n" + 
@@ -202,7 +204,7 @@ public class StagingToWarehouse {
 		System.out.println(cmd);
 	}
 	public static void main(String[] args) throws SQLException {
-		StagingToWarehouse stw = new StagingToWarehouse();
-		stw.createProcedure("insertClassroomdim", "MaLH int,MaMH varchar(10),Ca int,Nhom int,Nam varchar(10)", "classroomdim", "", "MaLH");
+//		StagingToWarehouse stw = new StagingToWarehouse();
+//		stw.createProcedure("insertClassroomdim", "MaLH int,MaMH varchar(10),Ca int,Nhom int,Nam varchar(10)", "classroomdim", "", "MaLH");
 	}
 }

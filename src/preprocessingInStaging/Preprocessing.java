@@ -13,6 +13,7 @@ public class Preprocessing {
         try {
 			Connection connection_user = DriverManager.getConnection(jdbcURLRoot, usernameRoot, passwordRoot);
 			connection_user.setAutoCommit(false);
+//			String cmd = 
 			PreparedStatement stat = connection_user.prepareStatement("UPDATE `data2` SET `MSSV`='no_value' WHERE `MSSV` is null;\r\n" + 
 					"UPDATE `data1` SET `Holot`='no_value' WHERE `Holot` is null;\r\n" + 
 					"UPDATE `data1` SET `Ten`='no_value' WHERE `Ten` is null;\r\n" + 
