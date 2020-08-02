@@ -6,6 +6,8 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.poi.hssf.record.DBCellRecord;
+
 import com.chilkatsoft.CkGlobal;
 import com.chilkatsoft.CkScp;
 import com.chilkatsoft.CkSsh;
@@ -17,6 +19,7 @@ import com.mysql.jdbc.Statement;
 import connectionDatabase.BaseConnection;
 
 public class DownloadFileFromServer {
+	//load chilkat library
 	static {
 		try {
 			System.loadLibrary("chilkat");
@@ -34,7 +37,7 @@ public class DownloadFileFromServer {
 
 	public Map<String, String> getConfig() {
 		Map<String, String> map = new HashMap<String, String>();
-		
+
 		int idconfig = 0;
 		String user = "";
 		String password = "";
@@ -44,13 +47,20 @@ public class DownloadFileFromServer {
 		int idlogtab = 0;
 		String status_file = "";
 
-		String sql = "select * from configtable as c join logtab as l on c.idconfig = l.idconfig where status_file = \"need_to_download\";";
 		try {
+			//Open a connection
+			System.out.println("Connecting to database...");
 			Connection conn = (Connection) BaseConnection.getMySQLConnection();
+			System.out.println("Connected database successfully!");
+			//Execute a query
+			System.out.println("Creating statement...");
 			Statement stmt = (Statement) conn.createStatement();
+			String sql = "select * from configtable as c join logtab as l on c.idconfig = l.idconfig where status_file = \"need_to_download\";";
 			stmt.execute(sql);
 			ResultSet rs = stmt.getResultSet();
-			while(rs.next()) {
+			//Extract data from result set
+			while (rs.next()) {
+				//Retrieve by column name
 				idconfig = rs.getInt("idconfig");
 				user = rs.getString("user");
 				password = rs.getString("password");
@@ -58,8 +68,8 @@ public class DownloadFileFromServer {
 				port = rs.getString("port");
 				local_dir = rs.getString("local_dir");
 				idlogtab = rs.getInt("idlogtab");
-				status_file =rs.getString("status_file");
-				
+				status_file = rs.getString("status_file");
+
 				map.put("idconfig", String.valueOf(idconfig));
 				map.put("user", user);
 				map.put("password", password);
@@ -69,6 +79,7 @@ public class DownloadFileFromServer {
 				map.put("idlogtab", String.valueOf(idlogtab));
 				map.put("status_file", status_file);
 			}
+			rs.close();
 			conn.close();
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
@@ -93,9 +104,10 @@ public class DownloadFileFromServer {
 		String pw = s[2];
 		String rd = s[3];
 		String fn = s[4];
-		
-		download(hn,us , pw,rd,portNunm,localdir,fn);
-	
+
+		//Download file with hostname, username, password, remotedir, port, localdir, filename
+		download(hn, us, pw, rd, portNunm, localdir, fn);
+
 		File file = new File("localdir");
 		if (file.exists()) {
 			writeLog(idLogTab, "ready_to_staging");
@@ -104,14 +116,15 @@ public class DownloadFileFromServer {
 		}
 	}
 
-	public static void download(String hostname, String username, String password,String remotedir, int port, String localdir,String filename) {
+	public static void download(String hostname, String username, String password, String remotedir, int port,
+			String localdir, String filename) {
 		CkGlobal glob = new CkGlobal();
 		glob.UnlockBundle("Waiting...");
-		
 
 		// hostname,port,us,ps,remotedir,filenam,localdir
 		// drive.ecepvn.org,guest_access,123456,/volume1/ECEP/song.nguyen/DW_2020/data,sinhvien_*.*
-		//drive.google.com,17130271@st.hcmuaf.edu.vn,20071999,/drive/u/1/my-drive,Báo cáo NMCNPM2020_Nhoms13_Web Bán điện thoại di động 
+		// drive.google.com,17130271@st.hcmuaf.edu.vn,20071999,/drive/u/1/my-drive,Báo
+		// cáo NMCNPM2020_Nhoms13_Web Bán điện thoại di động
 		String s = "";
 		String[] split = s.split(",");
 
@@ -133,19 +146,22 @@ public class DownloadFileFromServer {
 
 	}
 
-	public void writeLog(int idconfig,String status) throws ClassNotFoundException {
+	public void writeLog(int idconfig, String status) throws ClassNotFoundException {
 		try {
+			//Open a connect
 			Connection connection_user = (Connection) BaseConnection.getMySQLConnection();
 			connection_user.setAutoCommit(false);
-			java.lang.String sql = "UPDATE `control_database`.`logtab` SET `status_file` = '"+status+"' WHERE (`idlogTab` = '"+ idconfig + "');";
-			java.sql.Statement stmt =  connection_user.createStatement();
-			 int  i = stmt.executeUpdate(sql);
-			 System.out.println(i);
-			 connection_user.close();
+			//Execute a query
+			java.lang.String sql = "UPDATE `control_database`.`logtab` SET `status_file` = '" + status
+					+ "' WHERE (`idlogTab` = '" + idconfig + "');";
+			java.sql.Statement stmt = connection_user.createStatement();
+			int i = stmt.executeUpdate(sql);
+			System.out.println(i);
+			connection_user.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
 
 }
