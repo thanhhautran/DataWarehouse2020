@@ -30,11 +30,9 @@ import sendMail.SendMail;
 import updateLogAndConfig.UpdateLog;
 
 
-public class LoadToDatabase {
-		public static void main(String[] args) throws EncryptedDocumentException, IOException {
-			LoadToDatabase ltd = new LoadToDatabase();
-		}
+public class LoadToStaging {
 		public boolean fileIsExsist(Map<String, String> map) {
+			System.out.println(map.get("localdir"));
 			File file = new File(map.get("localdir"));
 			if(file.exists()) {
 				return true;
@@ -64,14 +62,14 @@ public class LoadToDatabase {
 			}
 			return false;
 		}
-		public Map<String,String> getFileToLoadStaging() {
+		public Map<String,String> getFileToLoadStagingById(int id){
 			Map<String, String> mapResult = new HashedMap<String, String>();
 	        int idConfig =0;//1
 	        String username = "";//2
 	        String password ="";//3
 	        String remoteDir="";//4
 	        String port ="";//5
-	        String localdir ="";//6
+	        String filepattern ="";//6
 	        String des_config ="";//7
 			String fileType = "";//8
 			String delimiter = "";//9
@@ -85,19 +83,25 @@ public class LoadToDatabase {
 			String warehouse_naturalKey ="";//17
 			String warehouse_des ="";//18
 			String procedureName="";//19
+			int idlogtab = 0 ;//20
+			String localdir ="";
+			
 			try {
 				Connection connection_user = BaseConnection.getMySQLConnection();
 				connection_user.setAutoCommit(false);
-				PreparedStatement stat = connection_user.prepareStatement("select * from configtable left join logtab on logtab.idconfig = configtable.idconfig where logtab.status_file = 'ready_to_staging';");
+				PreparedStatement stat = connection_user.prepareStatement("select * from configtable c, logtab l where "
+					+ "l.idconfig = c.idconfig and l.status_file = 'ready_to_staging' "
+					+ "and l.idlogtab = "+id+" limit 1;");
 				stat.execute();
 				ResultSet rs =  stat.getResultSet();
 				while(rs.next()) {
+					System.out.println("in has");
 					idConfig =rs.getInt(1);
 			        username = rs.getString(2);
 			        password =rs.getString(3);
 			        remoteDir = rs.getString(4);
 			        port = rs.getString(5);
-			        localdir =rs.getString(6);
+			        filepattern =rs.getString(6);
 			        des_config =rs.getString(7);
 					fileType = rs.getString(8);
 					delimiter = rs.getString(9);
@@ -111,7 +115,8 @@ public class LoadToDatabase {
 					warehouse_naturalKey =rs.getString(17);
 					warehouse_des = rs.getString(18);
 					procedureName = rs.getString(19);
-					System.out.println(des_config);
+					idlogtab = rs.getInt(20);
+					localdir = rs.getString(22);
 					mapResult.put("idConfig", String.valueOf(idConfig));mapResult.put("username", username);
 					mapResult.put("password", password);mapResult.put("localdir", localdir);
 					mapResult.put("des_config", des_config);mapResult.put("fileType",fileType);
@@ -120,7 +125,74 @@ public class LoadToDatabase {
 					mapResult.put("warehouse_des",warehouse_des);mapResult.put("colNum",String.valueOf(colNum));
 					mapResult.put("warehouseTabName",warehouseTabName);mapResult.put("warehouseColumn",warehouseColumn);
 					mapResult.put("staging_naturalKey",staging_naturalKey);mapResult.put("warehouse_naturalKey",warehouse_naturalKey);
-					mapResult.put("procedureName", procedureName);
+					mapResult.put("procedureName", procedureName);mapResult.put("idlogtab",String.valueOf(idlogtab));mapResult.put("filepattern", filepattern);
+				}
+				connection_user.close();
+			} catch (ClassNotFoundException | SQLException e) {
+				e.printStackTrace();
+			}
+			return mapResult;
+		}
+		public Map<String,String> getFileToLoadStaging() {
+			Map<String, String> mapResult = new HashedMap<String, String>();
+	        int idConfig =0;//1
+	        String username = "";//2
+	        String password ="";//3
+	        String remoteDir="";//4
+	        String port ="";//5
+	        String filepattern ="";//6
+	        String des_config ="";//7
+			String fileType = "";//8
+			String delimiter = "";//9
+			String listColumn = "";//10
+			String listWarehouseRequireCol = "";//11
+			String Staging_tabName = "";//12
+			int colNum = 0;//13
+			String warehouseTabName ="";//14
+			String warehouseColumn ="";//15
+			String staging_naturalKey ="";//16
+			String warehouse_naturalKey ="";//17
+			String warehouse_des ="";//18
+			String procedureName="";//19
+			String localdir ="";
+			try {
+				Connection connection_user = BaseConnection.getMySQLConnection();
+				connection_user.setAutoCommit(false);
+				PreparedStatement stat = connection_user.prepareStatement("select * from configtable "
+						+ "left join logtab on logtab.idconfig = configtable.idconfig "
+						+ "where logtab.status_file = 'ready_to_staging' limit 1;");
+				stat.execute();
+				ResultSet rs =  stat.getResultSet();
+				while(rs.next()) {
+					idConfig =rs.getInt(1);
+			        username = rs.getString(2);
+			        password =rs.getString(3);
+			        remoteDir = rs.getString(4);
+			        port = rs.getString(5);
+			        filepattern =rs.getString(6);
+			        des_config =rs.getString(7);
+					fileType = rs.getString(8);
+					delimiter = rs.getString(9);
+					listColumn = rs.getString(10);
+					listWarehouseRequireCol = rs.getString(11);
+					Staging_tabName = rs.getString(12);
+					colNum = rs.getInt(13);
+					warehouseTabName =rs.getString(14);
+					warehouseColumn =rs.getString(15);
+					staging_naturalKey =rs.getString(16);
+					warehouse_naturalKey =rs.getString(17);
+					warehouse_des = rs.getString(18);
+					procedureName = rs.getString(19);
+					localdir = rs.getString(22);
+					mapResult.put("idConfig", String.valueOf(idConfig));mapResult.put("username", username);
+					mapResult.put("password", password);mapResult.put("localdir", localdir);
+					mapResult.put("des_config", des_config);mapResult.put("fileType",fileType);
+					mapResult.put("delimiter",delimiter);mapResult.put("listColumn",listColumn);
+					mapResult.put("listWarehouseRequireCol", listWarehouseRequireCol);mapResult.put("Staging_tabName",Staging_tabName);
+					mapResult.put("warehouse_des",warehouse_des);mapResult.put("colNum",String.valueOf(colNum));
+					mapResult.put("warehouseTabName",warehouseTabName);mapResult.put("warehouseColumn",warehouseColumn);
+					mapResult.put("staging_naturalKey",staging_naturalKey);mapResult.put("warehouse_naturalKey",warehouse_naturalKey);
+					mapResult.put("procedureName", procedureName);mapResult.put("filepattern", filepattern);
 					break;
 				}
 				connection_user.close();
@@ -131,7 +203,7 @@ public class LoadToDatabase {
 			
 			return mapResult;
 		}
-		public static void loadToLocal(Map<String, String> mapConfig) throws EncryptedDocumentException, NumberFormatException, IOException, SQLException {
+		public void loadToLocal(Map<String, String> mapConfig) throws EncryptedDocumentException, NumberFormatException, IOException, SQLException {
 			Map<String, String> mapLog = getLogOf(Integer.parseInt(mapConfig.get("idConfig")));
 			UpdateLog ul = new UpdateLog();
 			switch (mapConfig.get("fileType")) {
@@ -143,7 +215,6 @@ public class LoadToDatabase {
 //					SendMail.sendMailToVertify("", "load file thanh cong", "");
 				}catch (Exception e) {
 					e.printStackTrace();
-					ul.updateLogWhenFail(Integer.parseInt(mapLog.get("id_logtab")));
 				}
 			}
 			case ".txt": {
@@ -154,7 +225,6 @@ public class LoadToDatabase {
 //					SendMail.sendMailToVertify("", "load file thanh cong", "");
 				}catch (Exception e) {
 					e.printStackTrace();
-					ul.updateLogWhenFail(Integer.parseInt(mapLog.get("id_logtab")));
 				}
 			}
 			case ".csv": {	
@@ -165,7 +235,6 @@ public class LoadToDatabase {
 //					SendMail.sendMailToVertify("", "load file thanh cong", "");
 				}catch (Exception e) {
 					e.printStackTrace();
-					ul.updateLogWhenFail(Integer.parseInt(mapLog.get("id_logtab")));
 					}
 				}
 			}
@@ -211,38 +280,47 @@ public class LoadToDatabase {
 			File file = new File(path);
 			InputStream is = new FileInputStream(file);
 			Workbook wb = WorkbookFactory.create(is);
-
+			
 	        Sheet sheet = wb.getSheetAt(0);
 	        Iterator<Row> rowIterator = sheet.iterator();
 	        String str = "";
+	        int line = 0 ;
+	       int colNum = 0;
 	        while(rowIterator.hasNext()) {
+	        	line++;
 	        	Row fRow = rowIterator.next();
-	        	Iterator<Cell> cellIterator = fRow.iterator();
-	        	while(cellIterator.hasNext()) {
+	        	if(line == 1) {
+	        	colNum = fRow.getLastCellNum();
+	        	}
+	        	for (int i=0; i<colNum; i++) {
 	        		DataFormatter df = new DataFormatter();
-	        		Cell cell = cellIterator.next();
+	        		Cell cell = fRow.getCell(i, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
 	        		String s ="";
 	        		if(cell.getCellType() == CellType.FORMULA) {
 	        			if(cell.getCachedFormulaResultType() == CellType.NUMERIC) {
-	        				s += ""+cell.getNumericCellValue();
+	        				s = ""+cell.getNumericCellValue();
 	        				str += s+",";
 	        			}
 	        			else if(cell.getCachedFormulaResultType() == CellType.STRING){
-	        				s += cell.getStringCellValue();
+	        				s = cell.getStringCellValue();
 	        				str += s+",";
 	                	}
-	        		}else{
+	        		}
+	        		else if(cell.getCellType() == CellType.BLANK || cell == null){
+	        				str += ",";
+	        		}
+	        		else if(cell.getCellType() != CellType.BLANK){
 	        			 s = df.formatCellValue(cell);
 	        			 str += s+",";
 	        		}
 	        	}
 	        	str += "\n";
 	        }
+	        System.out.println(str);
 	        File fileout = new File(file.getParent()+file.separator+file.getName().substring(0,file.getName().length()-5)+".csv");
 	        FileOutputStream fos = new FileOutputStream(fileout);
 	        fos.write(str.getBytes(StandardCharsets.UTF_8));
 			return fileout.getAbsolutePath();
-	        
 		}
 		public static void loadFileCsv(int idconfig,int id_log,String sourceConfig,String delimiter,String desConfig,String user,String password,String tableName) {
 	        try {
@@ -296,12 +374,8 @@ public class LoadToDatabase {
 				e1.printStackTrace();
 			}
 		}
-		public void cleanData() {
-			Preprocessing ppc = new Preprocessing();
-			ppc.replaceMissingValue();
-		}
-		public void combineData(String config) {
-			Preprocessing ppc = new Preprocessing();
-			ppc.combineValue(config);
+		public static void main(String[] args) throws EncryptedDocumentException, IOException {
+			LoadToStaging ltd = new LoadToStaging();
+//			ltd.convertToCsv("D:\\localpaging\\\\LopHoc_S_03.xlsx");
 		}
 }

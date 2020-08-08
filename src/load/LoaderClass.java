@@ -18,7 +18,32 @@ import com.mysql.jdbc.Statement;
 
 public class LoaderClass {
 	public static void main(String[] args) throws IOException {
-		
+//		public String splitAndProcess(String listColumnwarehouse) {
+//		String[] split = listColumnwarehouse.split(",");
+//		String valueInsert ="";
+//		String input ="";
+//		for (int i = 0; i < split.length; i++) {
+//			valueInsert += "in " + split[i]+",";
+//			String[] nameCol = split[i].split(" ");
+//			input += nameCol[0]+",";
+//		}
+//		valueInsert = valueInsert.substring(0, valueInsert.length()-1);
+//		input = input.substring(0,input.length()-1);
+//		valueInsert +="\n"+ input; 
+//		return valueInsert;
+//	}
+//	public void createProcedure(String procedureName,String listWarehouseRequired,String tableName,String listCol,String naturalKey) {
+//		String infor = splitAndProcess(listWarehouseRequired);
+//		String[] part = infor.split("\n");
+//		String cmd = "CREATE DEFINER=`root`@`localhost` PROCEDURE `"+procedureName+"`("+part[0]+")\r\n" + 
+//				"If EXISTS (SELECT * FROM "+tableName+" WHERE "+tableName+"."+naturalKey+"= "+naturalKey+" and "+tableName+".dt_expired='9999-01-01') then\r\n" + 
+//				"	update "+tableName+" set "+tableName+".dt_expired=curdate() where "+tableName+"."+naturalKey+"= "+naturalKey+" and "+tableName+".dt_expired='9999-01-01';\r\n" + 
+//				"	insert into "+tableName+"("+part[1]+",dt_expired,dt_haschange) values("+part[1]+",'9999-01-01','9999-01-01');\r\n" + 
+//				"ELSE\r\n" + 
+//				"   insert into "+tableName+"("+part[1]+",dt_expired,dt_haschange) values("+part[1]+",'9999-01-01','9999-01-01');\r\n" + 
+//				"end if";
+//		System.out.println(cmd);
+//	}
 		
 		//
 		 	String jdbcURLRoot = "jdbc:mysql://localhost:3306/warehouse?useSSL=false&characterEncoding=utf8";
