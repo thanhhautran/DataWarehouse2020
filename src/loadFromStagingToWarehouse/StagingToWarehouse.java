@@ -46,7 +46,7 @@ public class StagingToWarehouse {
 		try {
 			Connection connection_user = BaseConnection.getMySQLConnection();
 			connection_user.setAutoCommit(false);
-			PreparedStatement stat = connection_user.prepareStatement("select * from configtable c, logtab l where c.idConfig = l.idConfig and l.status_file = 'success_to_staging' and l.idconfig="+id+" limit 1;");
+			PreparedStatement stat = connection_user.prepareStatement("select * from configtable c, logtab l where c.idConfig = l.idConfig and c.flag='run' and l.status_file = 'success_to_staging' limit 1;");
 			stat.execute();
 			ResultSet rs =  stat.getResultSet();
 			while(rs.next()) {
@@ -62,7 +62,7 @@ public class StagingToWarehouse {
 				listColumn = rs.getString("list_column");
 				listWarehouseRequireCol = rs.getString("list_WarehouseRequiredColumn");
 				Staging_tabName = rs.getString("StagingTabName");
-				colNum = rs.getInt("numCol");
+				colNum = rs.getInt("numcol_of_file");
 				warehouseTabName =rs.getString("warehouseTabName");
 				warehouseColumn =rs.getString("warehouseColumn");
 				staging_naturalKey =rs.getString("staging_naturalKey");
@@ -189,12 +189,12 @@ public class StagingToWarehouse {
 		return false;
 		// tra ve ket qua ko co procedure
 	}
-	public void insertOneRecord(String value,String procedureName,String des,String username,String password) {
+	public void insertOneRecord(String value,String procedureName,String des,String username,String password) throws SQLException {
 		//thuc hien phuong thuc insertRecord nhan vao procdureName, connection ,user ,password de goi mot procedure
 		Connection connection_user = null;
 		// khoi tao mot connection
 		try {
-			connection_user = DriverManager.getConnection("jdbc:mysql://localhost:3306/warehouse?useSSL=false&characterEncoding=utf8","root", "1234");
+			connection_user = DriverManager.getConnection(des,username,password);
 			//tao mot connection
 			connection_user.setAutoCommit(false);
 			//set chuc nang tu dong commit la false 
@@ -209,6 +209,7 @@ public class StagingToWarehouse {
 			connection_user.close();
 			// dong ket noi
 		} catch (SQLException e) {
+			connection_user.rollback();
 			e.printStackTrace();
 		}
 	}

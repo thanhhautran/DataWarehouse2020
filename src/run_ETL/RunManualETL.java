@@ -28,7 +28,8 @@ public class RunManualETL {
 					//loadfile tu local len staging
 					if(ltd.isEqualColNum(listConfig)) {
 						//kiem tra so dong xem co load du dong hay khong
-					ul.updateLogWhenSuccess(Integer.parseInt(listConfig.get("idlogtab")), 58);
+					int colNum = ltd.getNumColOfTable(listConfig.get("Staging_tabName"),listConfig.get("des_config"),listConfig.get("username"),listConfig.get("password"));
+					ul.updateLogWhenSuccess(Integer.parseInt(listConfig.get("idlogtab")), colNum);
 						//neu thanh cong ghi log lai so dong va thong bao thanh cong
 					}else {
 						SendMail.sendMailToVertify("17130059", "Load Khong du dong ", "");
@@ -57,8 +58,6 @@ public class RunManualETL {
 		//lay ra mot dong config trong control database
 		stw.LoadToWarehouse(map);
 		//load data tu bang staging sang warehouse
-		System.out.println(map.get("Staging_tabName"));
-//		stw.truncateTable(map.get("Staging_tabName"));
 	}
 	public void ETL(int id) throws SQLException, ClassNotFoundException {
 		//phuong thuc ETL de thuc hien qua trinh extract,transform,load 

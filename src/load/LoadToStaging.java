@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -32,7 +33,6 @@ import updateLogAndConfig.UpdateLog;
 
 public class LoadToStaging {
 		public boolean fileIsExsist(Map<String, String> map) {
-			System.out.println(map.get("localdir"));
 			File file = new File(map.get("localdir"));
 			if(file.exists()) {
 				return true;
@@ -40,7 +40,28 @@ public class LoadToStaging {
 			return false;
 			}
 		}
-		public static int getNumColOfTable(String tableName,String desConfig,String user,String password) throws SQLException {
+		public void callRun() throws ClassNotFoundException, SQLException {
+			Connection connection_user = null;
+			// khoi tao mot connection
+			try {
+				connection_user = BaseConnection.getMySQLConnection();
+				//tao mot connection
+				connection_user.setAutoCommit(false);
+				//set chuc nang tu dong commit la false 
+				CallableStatement call = connection_user.prepareCall("{call checkrunprocess() }");
+				//test query
+				call.execute();
+				//thuc thi cau call procedure
+				connection_user.commit();
+				// thuc hien commit
+				connection_user.close();
+				// dong ket noi
+			} catch (SQLException e) {
+				connection_user.rollback();
+				e.printStackTrace();
+			}
+		}
+		public int getNumColOfTable(String tableName,String desConfig,String user,String password) throws SQLException {
 			Connection con = DriverManager.getConnection(desConfig, user, password);
 			int numcol =0;
 			String text = "SELECT COUNT(*) FROM "+tableName;
@@ -91,32 +112,31 @@ public class LoadToStaging {
 				connection_user.setAutoCommit(false);
 				PreparedStatement stat = connection_user.prepareStatement("select * from configtable c, logtab l where "
 					+ "l.idconfig = c.idconfig and l.status_file = 'ready_to_staging' "
-					+ "and l.idlogtab = "+id+" limit 1;");
+					+ "and c.idconfig = "+id+" limit 1;");
 				stat.execute();
 				ResultSet rs =  stat.getResultSet();
 				while(rs.next()) {
-					System.out.println("in has");
-					idConfig =rs.getInt(1);
-			        username = rs.getString(2);
-			        password =rs.getString(3);
-			        remoteDir = rs.getString(4);
-			        port = rs.getString(5);
-			        filepattern =rs.getString(6);
-			        des_config =rs.getString(7);
-					fileType = rs.getString(8);
-					delimiter = rs.getString(9);
-					listColumn = rs.getString(10);
-					listWarehouseRequireCol = rs.getString(11);
-					Staging_tabName = rs.getString(12);
-					colNum = rs.getInt(13);
-					warehouseTabName =rs.getString(14);
-					warehouseColumn =rs.getString(15);
-					staging_naturalKey =rs.getString(16);
-					warehouse_naturalKey =rs.getString(17);
-					warehouse_des = rs.getString(18);
-					procedureName = rs.getString(19);
-					idlogtab = rs.getInt(20);
-					localdir = rs.getString(22);
+					idConfig =rs.getInt("idConfig");
+			        username = rs.getString("user");
+			        password =rs.getString("password");
+			        remoteDir = rs.getString("remote_Dir");
+			        port = rs.getString("port");
+			        filepattern =rs.getString("file_pattern");
+			        des_config =rs.getString("des_config");
+					fileType = rs.getString("file_type");
+					delimiter = rs.getString("delimiter");
+					listColumn = rs.getString("list_column");
+					listWarehouseRequireCol = rs.getString("list_warehouseRequiredColumn");
+					Staging_tabName = rs.getString("stagingTabName");
+					colNum = rs.getInt("numcol_of_file");
+					warehouseTabName =rs.getString("warehouseTabName");
+					warehouseColumn =rs.getString("warehouseColumn");
+					staging_naturalKey =rs.getString("staging_naturalKey");
+					warehouse_naturalKey =rs.getString("warehouse_naturalKey");
+					warehouse_des = rs.getString("warehouse_des");
+					procedureName = rs.getString("procedureName");
+					idlogtab = rs.getInt("idlogTab");
+					localdir = rs.getString("filePathLocal");
 					mapResult.put("idConfig", String.valueOf(idConfig));mapResult.put("username", username);
 					mapResult.put("password", password);mapResult.put("localdir", localdir);
 					mapResult.put("des_config", des_config);mapResult.put("fileType",fileType);
@@ -154,36 +174,38 @@ public class LoadToStaging {
 			String warehouse_naturalKey ="";//17
 			String warehouse_des ="";//18
 			String procedureName="";//19
+			int idlogtab = 0 ;//20
 			String localdir ="";
 			try {
 				Connection connection_user = BaseConnection.getMySQLConnection();
 				connection_user.setAutoCommit(false);
 				PreparedStatement stat = connection_user.prepareStatement("select * from configtable "
 						+ "left join logtab on logtab.idconfig = configtable.idconfig "
-						+ "where logtab.status_file = 'ready_to_staging' limit 1;");
+						+ "l.idconfig = c.idconfig and c.flag = 'run' and l.status_file = 'ready_to_staging' limit 1;");
 				stat.execute();
 				ResultSet rs =  stat.getResultSet();
 				while(rs.next()) {
-					idConfig =rs.getInt(1);
-			        username = rs.getString(2);
-			        password =rs.getString(3);
-			        remoteDir = rs.getString(4);
-			        port = rs.getString(5);
-			        filepattern =rs.getString(6);
-			        des_config =rs.getString(7);
-					fileType = rs.getString(8);
-					delimiter = rs.getString(9);
-					listColumn = rs.getString(10);
-					listWarehouseRequireCol = rs.getString(11);
-					Staging_tabName = rs.getString(12);
-					colNum = rs.getInt(13);
-					warehouseTabName =rs.getString(14);
-					warehouseColumn =rs.getString(15);
-					staging_naturalKey =rs.getString(16);
-					warehouse_naturalKey =rs.getString(17);
-					warehouse_des = rs.getString(18);
-					procedureName = rs.getString(19);
-					localdir = rs.getString(22);
+					idConfig =rs.getInt("idConfig");
+			        username = rs.getString("user");
+			        password =rs.getString("password");
+			        remoteDir = rs.getString("remoteDir");
+			        port = rs.getString("port");
+			        filepattern =rs.getString("file_pattern");
+			        des_config =rs.getString("des_config");
+					fileType = rs.getString("file_type");
+					delimiter = rs.getString("delimiter");
+					listColumn = rs.getString("list_column");
+					listWarehouseRequireCol = rs.getString("list_warehouseRequiredColumn");
+					Staging_tabName = rs.getString("stagingTabName");
+					colNum = rs.getInt("numcol_of_file");
+					warehouseTabName =rs.getString("warehouseTabName");
+					warehouseColumn =rs.getString("warehouseColumn");
+					staging_naturalKey =rs.getString("staging_naturalKey");
+					warehouse_naturalKey =rs.getString("warehouse_naturalKey");
+					warehouse_des = rs.getString("warehouse_des");
+					procedureName = rs.getString("procedureName");
+					idlogtab = rs.getInt("idlogTab");
+					localdir = rs.getString("filePathLocal");
 					mapResult.put("idConfig", String.valueOf(idConfig));mapResult.put("username", username);
 					mapResult.put("password", password);mapResult.put("localdir", localdir);
 					mapResult.put("des_config", des_config);mapResult.put("fileType",fileType);
@@ -210,9 +232,8 @@ public class LoadToStaging {
 			case ".xlsx": {
 				try {
 				loadFileExcel(Integer.parseInt(mapConfig.get("idConfig")),Integer.parseInt(mapLog.get("id_logtab")),mapConfig.get("localdir"),mapConfig.get("delimiter"), mapConfig.get("des_config"),mapConfig.get("username"), mapConfig.get("password"), mapConfig.get("Staging_tabName"));
-					int numcol = getNumColOfTable(mapConfig.get("Staging_tabName"),mapConfig.get("des_config"),mapConfig.get("username"),mapConfig.get("password"));
-					ul.updateLogWhenSuccess(Integer.parseInt(mapLog.get("id_logtab")), numcol);
-//					SendMail.sendMailToVertify("", "load file thanh cong", "");
+//					int numcol = getNumColOfTable(mapConfig.get("Staging_tabName"),mapConfig.get("des_config"),mapConfig.get("username"),mapConfig.get("password"));
+//					ul.updateLogWhenSuccess(Integer.parseInt(mapLog.get("id_logtab")), numcol);
 				}catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -220,9 +241,8 @@ public class LoadToStaging {
 			case ".txt": {
 				try {
 				loadFileTxt(Integer.parseInt(mapConfig.get("idConfig")),Integer.parseInt(mapLog.get("id_logtab")),mapConfig.get("localdir"),mapConfig.get("delimiter"), mapConfig.get("des_config"),mapConfig.get("username"), mapConfig.get("password"), mapConfig.get("Staging_tabName"));
-					int numcol = getNumColOfTable(mapConfig.get("Staging_tabName"),mapConfig.get("des_config"),mapConfig.get("username"),mapConfig.get("password"));
-					ul.updateLogWhenSuccess(Integer.parseInt(mapLog.get("id_logtab")), numcol);
-//					SendMail.sendMailToVertify("", "load file thanh cong", "");
+//					int numcol = getNumColOfTable(mapConfig.get("Staging_tabName"),mapConfig.get("des_config"),mapConfig.get("username"),mapConfig.get("password"));
+//					ul.updateLogWhenSuccess(Integer.parseInt(mapLog.get("id_logtab")), numcol);
 				}catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -230,9 +250,8 @@ public class LoadToStaging {
 			case ".csv": {	
 				try {
 				loadFileCsv(Integer.parseInt(mapConfig.get("idConfig")),Integer.parseInt(mapLog.get("id_logtab")),mapConfig.get("localdir"),mapConfig.get("delimiter"), mapConfig.get("des_config"),mapConfig.get("username"), mapConfig.get("password"), mapConfig.get("Staging_tabName"));
-					int numcol = getNumColOfTable(mapConfig.get("Staging_tabName"),mapConfig.get("des_config"),mapConfig.get("username"),mapConfig.get("password"));
-					ul.updateLogWhenSuccess(Integer.parseInt(mapLog.get("id_logtab")), numcol);
-//					SendMail.sendMailToVertify("", "load file thanh cong", "");
+//					int numcol = getNumColOfTable(mapConfig.get("Staging_tabName"),mapConfig.get("des_config"),mapConfig.get("username"),mapConfig.get("password"));
+//					ul.updateLogWhenSuccess(Integer.parseInt(mapLog.get("id_logtab")), numcol);
 				}catch (Exception e) {
 					e.printStackTrace();
 					}

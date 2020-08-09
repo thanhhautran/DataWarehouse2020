@@ -17,6 +17,12 @@ public class RunAutomatic {
 		//new ra mot doi tuong cua class LoadToStaging de goi phuong thuc ben trong
 		UpdateLog ul = new UpdateLog();
 		//new ra mot doi tuong cua class UpdateLog de goi phuong thuc ben trong
+		try {
+			ltd.callRun();
+		} catch (ClassNotFoundException | SQLException e1) {
+			e1.printStackTrace();
+		}
+		//phuong thuc callrun() set flag run cho nhung process chua chay ETL 
 		Map<String, String> listConfig = ltd.getFileToLoadStaging();
 		// lay ra mot file tu configlog
 			if(ltd.fileIsExsist(listConfig)) {
