@@ -45,8 +45,10 @@ public class StagingToWarehouse {
 		//cac bien duoc khai dai dien cho cai column trong config
 		try {
 			Connection connection_user = BaseConnection.getMySQLConnection();
+			//1.Mở kết nối tới Database control 
 			connection_user.setAutoCommit(false);
 			PreparedStatement stat = connection_user.prepareStatement("select * from configtable c, logtab l where c.idConfig = l.idConfig and c.flag='run' and l.status_file = 'success_to_staging' limit 1;");
+			//2.Lấy ra 1list config thuộc tính flag trong bảng config là run và thuộc tính statusfile trong bảng log là 'ready_to_warehouse'
 			stat.execute();
 			ResultSet rs =  stat.getResultSet();
 			while(rs.next()) {
@@ -100,13 +102,17 @@ public class StagingToWarehouse {
 		//new ra mot doi tuong cua class UpdateLog de goi phuong thuc ben trong
 		if(checkExistsOfProceDure(map.get("warehouse_des"), map.get("username"), map.get("password"), map.get("procedureName")) == true) {
 			//kiem tra procedure dung de insert vao warehouse co ton tai hay khong
+			//3.Lấy ra kết nối, user, password, tên procedure trong bảng config kiểm tra xem đã tồn tại hay chưa
 			try {
+				
 				connection_user = DriverManager.getConnection(map.get("warehouse_des"), map.get("username"), map.get("password"));
+				//3b. lấy ra connection, user,password, tên table staging trong bảng config để lấy ra connection tới staging
 				//lay ket noi dua tren config
 				connection_user.setAutoCommit(false);
 				//set chuc nang tu dong commit la false 
 				PreparedStatement stat = connection_user.prepareStatement("select "+map.get("listColumn") +" from staging."+map.get("Staging_tabName"));
 				//tao cau query luu vao preparedStatement
+				//4.thực hiện truy vấn tất cả các dòng trong bảng tạm staging trả về result set
 				System.out.println("select "+map.get("listColumn") +" from "+map.get("Staging_tabName"));
 				//test query
 				ResultSet rs= stat.executeQuery();
@@ -116,16 +122,19 @@ public class StagingToWarehouse {
 					String value = handleValue(rs,map.get("listColumn"));
 					// thuc hien phuong thuc handleValue nhan vao resultSet va listColumn tra ve cac gia tri cho cau query
 					insertOneRecord(value,map.get("procedureName"),map.get("warehouse_des"),map.get("username"),map.get("password"));
+					//5.Gọi phương thức để insert từng dòng trong table staging vào trong bảng dim ở warehouse với tham số là giá trị đầu vào , tên procedure, connection, user, password
 					//thuc hien phuong thuc insertRecord nhan vao procdureName, connection ,user ,password de goi mot procedure
 				}
 				ul.updateLogWhenSuccessLoadWarehouse(Integer.parseInt(map.get("idConfig")));
 				//updateLog
+				//9.Update log thành công.
 				connection_user.commit();
 				//thuc hien commit data len database
 				connection_user.close();
 				//thuc hien dong ket noi
 				truncateTable(map.get("Staging_tabName"));
 				//thuc hien truncate table o staging
+				//10.truncate table
 			} catch (SQLException e) {
 				e.printStackTrace();
 				connection_user.rollback();
@@ -133,6 +142,8 @@ public class StagingToWarehouse {
 				ul.updateLogWhenFailLoadWarehouse(Integer.parseInt(map.get("idConfig")));
 				//update log la that bai
 			}
+		}else {
+			//3a.Gửi mail báo lỗi không có procedure
 		}
 	}
 	public boolean truncateTable(String tabname) throws ClassNotFoundException {
@@ -195,6 +206,7 @@ public class StagingToWarehouse {
 		// khoi tao mot connection
 		try {
 			connection_user = DriverManager.getConnection(des,username,password);
+			//7. lấy ra connection, user,password, tên table staging trong bảng config để lấy ra connection tới warehouse
 			//tao mot connection
 			connection_user.setAutoCommit(false);
 			//set chuc nang tu dong commit la false 
@@ -203,6 +215,7 @@ public class StagingToWarehouse {
 			System.out.println("{call "+procedureName+"("+value+")}");
 			//test query
 			call.execute();
+			//8.gọi một procedure trong database với tham số đầu vào là  từng dòng trong ResultSet ở step 4
 			//thuc thi cau call procedure
 			connection_user.commit();
 			// thuc hien commit
