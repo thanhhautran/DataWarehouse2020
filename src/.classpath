@@ -22,5 +22,6 @@
 	<classpathentry kind="lib" path="C:/Users/jackg/Downloads/libary/smtp-1.3.jar"/>
 	<classpathentry kind="lib" path="C:/Users/jackg/Downloads/libary/javax.mail-api-1.5.2.jar"/>
 	<classpathentry kind="lib" path="C:/Users/jackg/Downloads/libary/activation.jar"/>
+	<classpathentry kind="lib" path="chilkat.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>

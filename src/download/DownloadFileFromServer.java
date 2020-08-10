@@ -13,7 +13,6 @@ import org.apache.poi.hssf.record.DBCellRecord;
 import com.chilkatsoft.CkGlobal;
 import com.chilkatsoft.CkScp;
 import com.chilkatsoft.CkSsh;
-import com.jscape.ftcl.b.a.M;
 import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.PreparedStatement;
 import com.mysql.jdbc.Statement;
