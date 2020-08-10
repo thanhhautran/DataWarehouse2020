@@ -22,5 +22,6 @@
 	<classpathentry kind="lib" path="D:/eclipse-workspace/warehouse/DataWarehouse2020/src/thuvien/commons-collections4-4.4.jar"/>
 	<classpathentry kind="lib" path="D:/eclipse-workspace/warehouse/DataWarehouse2020/src/thuvien/commons-compress-1.19.jar"/>
 	<classpathentry kind="lib" path="chilkat.jar"/>
+	<classpathentry kind="lib" path="chilkat.dll"/>
 	<classpathentry kind="output" path=""/>
 </classpath>

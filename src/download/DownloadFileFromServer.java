@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.poi.hssf.record.DBCellRecord;
+
 import com.chilkatsoft.CkGlobal;
 import com.chilkatsoft.CkScp;
 import com.chilkatsoft.CkSsh;
@@ -19,15 +21,6 @@ import com.mysql.jdbc.Statement;
 import connectionDatabase.BaseConnection;
 
 public class DownloadFileFromServer {
-	// Load chilkat library
-//	static {
-//		try {
-//			System.loadLibrary("chilkat");
-//		} catch (UnsatisfiedLinkError e) {
-//			System.err.println("Native code library failed to load.\n" + e);
-//			System.exit(1);
-//		}
-//	}
 
 	public static void main(String[] args) throws ClassNotFoundException {
 		DownloadFileFromServer dff = new DownloadFileFromServer();
@@ -49,7 +42,7 @@ public class DownloadFileFromServer {
 		String local_dir = "";
 
 		try {
-			// Open a connection
+			// 1. Mở kết nối đến database control
 			System.out.println("Connecting to database...");
 			Connection conn = (Connection) BaseConnection.getMySQLConnection();
 			System.out.println("Connected database successfully!");
@@ -103,9 +96,7 @@ public class DownloadFileFromServer {
 		String port = mapConfig.get("port");
 		String file_pattern = mapConfig.get("file_pattern");
 		int portNum = Integer.parseInt(port);
-//		int idLogTab = Integer.parseInt(idlogtab);
 		int idConfig = Integer.parseInt(idconfig);
-//		String filePathLocal = mapConfig.get("filePathLocal");
 
 		// drive.ecepvn.org,guest_access,123456,/volume1/ECEP/song.nguyen/DW_2020/data
 		// Cắt remotedir để lấy các phần tử hostname, username, password, remotedir, file_path
@@ -114,27 +105,18 @@ public class DownloadFileFromServer {
 		String us = s[1];
 		String pw = s[2];
 		String rd = s[3];
-		// Download file with hostname, username, password, remotedir, port, localdir,
-		// file_pattern
+		
+		// 2. Lấy các thuộc tính cần thiết trong bảng configtable đưa vào phương thức download
 		download(hn, us, pw, rd, portNum, localdir, file_pattern);
 
-		// Kiểm tra xem trong thư mục local có file không
-		File file = new File("local_dir");
-		// Nếu có thì thông báo thành công và ghi vào log là sẵn sàng để load vào
-		// staging
-		if (file.exists()) {
-			System.out.println("Downloaded successfully!");
-			writeLog(idConfig, "ready_to_staging");
-			// Nếu không thì thông báo thất bại và ghi vào log là tải xuống thất bại
-		} else {
-			System.out.println("Download failed!");
-			writeLog(idConfig, "failed_to_download");
-		}
+		// 8. Gọi phương thức writeLog() để lấy tên tất cả các file trong local ghi vào log table
+		writeLog(idConfig, "ready_to_staging");
+
 	}
 
 	public static void download(String hostname, String username, String password, String remotedir, int port,
 			String localdir, String file_pattern) {
-		// Load Chilkat library
+		// 3. Load thư viện chilkat
 		try {
 			System.loadLibrary("chilkat");
 		} catch (UnsatisfiedLinkError e) {
@@ -142,13 +124,13 @@ public class DownloadFileFromServer {
 			System.exit(1);
 		}
 		
-		// Mở khóa Bundle
+		// 4. Mở khóa Bundle
 		CkGlobal glob = new CkGlobal();
 		glob.UnlockBundle("Waiting...");
 
-		// Kết nối với SSH server
+		// 5. Dùng tham số hostname, port, username, password để kết nối tới SSH server
 		CkSsh ssh = new CkSsh();
-		ssh.Connect(hostname, port);
+		ssh.Connect(hostname, port); 
 
 		// Chờ tối đa 5s khi đọc phản hồi
 		ssh.put_IdleTimeoutMs(5000);
@@ -157,9 +139,10 @@ public class DownloadFileFromServer {
 		boolean authenticatePw = ssh.AuthenticatePw(username, password);
 		System.out.println("Autheticate password: " + authenticatePw);
 
+		// Gọi đối tượng scp để download
 		CkScp scp = new CkScp();
 		scp.UseSsh(ssh);
-		// Tải xuống các tệp có tên khớp với cột file_pattern trong bảng config
+		// 6. Dùng tham số file_pattern, remote_dir, local_dir để thực hiện download file về local
 		scp.put_SyncMustMatch(file_pattern);
 		String remote_dir = remotedir;
 		String local_dir = localdir;
@@ -179,7 +162,7 @@ public class DownloadFileFromServer {
 		// Thực hiện download từ remote_dir về local_dir
 		scp.SyncTreeDownload(remote_dir, local_dir, mode, false);
 
-		// disconnect
+		// 7. Ngắt kết nối SSH server
 		ssh.Disconnect();
 
 	}
@@ -194,12 +177,11 @@ public class DownloadFileFromServer {
 			File[] listFile = fileLocal.listFiles();
 			for (int i = 0; i < listFile.length; i++) {
 				File file2 = listFile[i];
-//				java.lang.String sql = "UPDATE `control_database`.`logtab` SET " + "`idconfig` = '" + idconfig
-//						+ "' AND `status_file` = '" + status + "' AND `filePathLocal` = '" + file2.getAbsolutePath() + "';";
-				String sql = "INSERT INTO logtab (idlogtab, idconfig, filePathLocal, status_file) VALUES ('" + i
-						+ "', '" + idconfig + "', '" + file2.getAbsolutePath() + "', '" + status + "');";
+
+				String sql = "INSERT INTO logtab ( idconfig, filePathLocal, status_file) VALUES ('" + idconfig + "', '" + file2.getAbsolutePath() + "', '" + status + "');";
 				Statement stmt = (Statement) connection_user.createStatement();
 				stmt.addBatch(sql);
+				// Thực thi bacth
 				stmt.executeBatch();
 
 			}

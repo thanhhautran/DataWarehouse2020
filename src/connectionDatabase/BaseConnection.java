@@ -9,7 +9,7 @@ public class BaseConnection {
 		String hostName = "localhost";
 		String dbName = "control_database";
 		String userName = "root";
-		String password = "1234";
+		String password = "hvnd13051998";
 
 		return getMySQLConnection(hostName, dbName, userName, password);
 	}
