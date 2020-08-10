@@ -19,30 +19,33 @@ public class RunManualETL {
 		//new ra mot doi tuong cua class LoadToStaging de goi phuong thuc ben trong
 		UpdateLog ul = new UpdateLog();
 		//new ra mot doi tuong cua class UpdateLog de goi phuong thuc ben trong
-		Map<String, String> listConfig = ltd.getFileToLoadStagingById(id);
+		Map<String, String> listConfig = ltd.getFileToLoadStagingById(id); //1.Mở kết nối tới Database control + 2.Lấy ra 1list config có thuộc tính statusfile trong bảng log là 'ready_to_staging'
 		// lay ra mot file tu configlog
 			if(ltd.fileIsExsist(listConfig)) {
-				//kiem tra xem file co ton tai ko
+				//kiem tra xem file co ton tai ko - 3.Kiểm tra đường dẫn lưu trong thuộc tính filePathLocal trong bảng log có nằm trong thư  mục local hay không
 				try {
-					ltd.loadToLocal(listConfig);
-					//loadfile tu local len staging
+					ltd.loadToLocal(listConfig);//4b.Kiểm tra loại file và delimiter dựa vào các thuộc tính trên bảng config 
+					//+ 5.Lấy các thuộc tính cần thiết trong bảng config đưa vào phương thức load data vào staging
+					//loadfile tu local len staging + 6.Thực hiện kết nối tới staging + 7b.Load cả file từ local lên bảng staging
 					if(ltd.isEqualColNum(listConfig)) {
-						//kiem tra so dong xem co load du dong hay khong
-					ul.updateLogWhenSuccess(Integer.parseInt(listConfig.get("idlogtab")), 58);
-						//neu thanh cong ghi log lai so dong va thong bao thanh cong
+						//kiem tra so dong xem co load du dong hay khong - 8.Kiểm tra số dòng đã load vào bảng tạm trong staging
+					int colNum = ltd.getNumColOfTable(listConfig.get("Staging_tabName"),listConfig.get("des_config"),listConfig.get("username"),listConfig.get("password"));
+					ul.updateLogWhenSuccess(Integer.parseInt(listConfig.get("idlogtab")), colNum);
+						//neu thanh cong ghi log lai so dong va thong bao thanh cong - 9b.Gửi mail thông báo thành công & cập nhật lại log của file, số dòng load thành công
 					}else {
 						SendMail.sendMailToVertify("17130059", "Load Khong du dong ", "");
-						//neu that bai ghi log lai so dong bang 0 va thong bao that bai
+						//neu that bai ghi log lai so dong bang 0 va thong bao that bai - 9.aGửi mail thông báo load không đủ dòng
 					}
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					ul.updateLogWhenFail(Integer.parseInt(listConfig.get("idlogtab")));
-					//update log that bai khi tim thay loi trong ngoai le
+					//update log that bai khi tim thay loi trong ngoai le - 9.aGửi mail thông báo load không đủ dòng
 				}
 			}else {
 				try {
 					SendMail.sendMailToVertify("17130059", "Loi load file tu local len staging", "");
+					//4a.Gửi mail thông báo source không có trong local
 				} catch (MessagingException e) {
 					e.printStackTrace();
 				}
@@ -54,11 +57,17 @@ public class RunManualETL {
 		StagingToWarehouse stw = new StagingToWarehouse();
 		//new ra mot doi tuong cua class StagingToWarehouse de goi phuong thuc ben trong
 		Map<String, String> map = stw.getSTReadyToWarehouse(id);
+		//1.Mở kết nối tới Database control 
+		//+ 2.Lấy ra 1list config thuộc tính flag trong bảng config là run và thuộc tính statusfile trong bảng log là 'ready_to_warehouse'
 		//lay ra mot dong config trong control database
 		stw.LoadToWarehouse(map);
+		//+3.Lấy ra kết nối, user, password, tên procedure trong bảng config kiểm tra xem đã tồn tại hay chưa
+		//+4.thực hiện truy vấn tất cả các dòng trong bảng tạm staging trả về result set
+		//+5.Gọi phương thức để insert từng dòng trong table staging vào trong bảng dim ở warehouse với tham số là giá trị đầu vào , tên procedure, connection, user, password
+		//+7. lấy ra connection, user,password, tên table staging trong bảng config để lấy ra connection tới warehouse
+		//+8.gọi một procedure trong database với tham số đầu vào là  từng dòng trong ResultSet ở step 4
+		//+9.Update log thành công.
 		//load data tu bang staging sang warehouse
-		System.out.println(map.get("Staging_tabName"));
-//		stw.truncateTable(map.get("Staging_tabName"));
 	}
 	public void ETL(int id) throws SQLException, ClassNotFoundException {
 		//phuong thuc ETL de thuc hien qua trinh extract,transform,load 

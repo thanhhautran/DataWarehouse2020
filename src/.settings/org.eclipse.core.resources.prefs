@@ -1,2 +1,4 @@
 eclipse.preferences.version=1
+encoding//load/LoadToStaging.java=UTF-8
 encoding//loadFromStagingToWarehouse/StagingToWarehouse.java=UTF-8
+encoding//run_ETL/RunManualETL.java=UTF-8
